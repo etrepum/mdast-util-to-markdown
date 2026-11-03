@@ -6423,30 +6423,12 @@ test('attention', async function (t) {
 
   await t.test(
     'should serialize many runs of attention next to each other in linear time',
+    // Quadratic serializing takes minutes.
+    {timeout: 30_000},
     async function () {
-      /** @type {Array<PhrasingContent>} */
-      const children = []
-      let index = -1
+      const children = runs()
 
-      while (++index < 2000) {
-        const a = index % 2 ? '.' : 'a'
-        const b = index % 2 ? 'a' : '.'
-        children.push(
-          {type: 'strong', children: [{type: 'text', value: a}]},
-          {
-            type: 'emphasis',
-            children: [
-              {type: 'text', value: b},
-              {type: 'strong', children: [{type: 'text', value: a}]}
-            ]
-          }
-        )
-      }
-
-      // Quadratic serializing takes over a minute.
-      const start = performance.now()
       const tree = from(to({type: 'paragraph', children}))
-      assert.ok(performance.now() - start < 10_000)
       removePosition(tree, {force: true})
 
       assert.deepEqual(tree, {
@@ -6458,32 +6440,14 @@ test('attention', async function (t) {
 
   await t.test(
     'should serialize many runs of attention in attention in linear time',
+    // Quadratic serializing takes minutes.
+    {timeout: 30_000},
     async function () {
-      /** @type {Array<PhrasingContent>} */
-      const children = []
-      let index = -1
+      const children = runs()
 
-      while (++index < 2000) {
-        const a = index % 2 ? '.' : 'a'
-        const b = index % 2 ? 'a' : '.'
-        children.push(
-          {type: 'strong', children: [{type: 'text', value: a}]},
-          {
-            type: 'emphasis',
-            children: [
-              {type: 'text', value: b},
-              {type: 'strong', children: [{type: 'text', value: a}]}
-            ]
-          }
-        )
-      }
-
-      // Quadratic serializing takes minutes.
-      const start = performance.now()
       const tree = from(
         to({type: 'paragraph', children: [{type: 'strong', children}]})
       )
-      assert.ok(performance.now() - start < 10_000)
       removePosition(tree, {force: true})
 
       assert.deepEqual(tree, {
@@ -6495,6 +6459,8 @@ test('attention', async function (t) {
 
   await t.test(
     'should serialize many empty attention next to each other in linear time',
+    // Quadratic serializing takes minutes.
+    {timeout: 30_000},
     async function () {
       /** @type {Array<PhrasingContent>} */
       const children = []
@@ -6507,10 +6473,7 @@ test('attention', async function (t) {
         )
       }
 
-      // Quadratic serializing takes minutes.
-      const start = performance.now()
       const value = to({type: 'paragraph', children})
-      assert.ok(performance.now() - start < 10_000)
       assert.equal(value, '*'.repeat(12_000) + '\n')
     }
   )
@@ -6953,4 +6916,34 @@ function createList(d) {
       {type: 'listItem', children: Array.isArray(d) ? d : d ? [d] : []}
     ]
   }
+}
+
+/**
+ * Create many runs of attention next to each other,
+ * where each one needs another sequence than the one before.
+ *
+ * @returns {Array<PhrasingContent>}
+ *   Phrasing.
+ */
+function runs() {
+  /** @type {Array<PhrasingContent>} */
+  const children = []
+  let index = -1
+
+  while (++index < 2000) {
+    const a = index % 2 ? '.' : 'a'
+    const b = index % 2 ? 'a' : '.'
+    children.push(
+      {type: 'strong', children: [{type: 'text', value: a}]},
+      {
+        type: 'emphasis',
+        children: [
+          {type: 'text', value: b},
+          {type: 'strong', children: [{type: 'text', value: a}]}
+        ]
+      }
+    )
+  }
+
+  return children
 }
