@@ -6422,10 +6422,8 @@ test('attention', async function (t) {
   })
 
   await t.test(
-    'should serialize many runs of attention next to each other',
+    'should serialize many runs of attention next to each other in linear time',
     async function () {
-      // Each choice of markers only changes the runs around it,
-      // so this takes as long as its size, not its square.
       /** @type {Array<PhrasingContent>} */
       const children = []
       let index = -1
@@ -6445,13 +6443,59 @@ test('attention', async function (t) {
         )
       }
 
+      // Quadratic serializing takes over a minute.
+      const start = performance.now()
       const tree = from(to({type: 'paragraph', children}))
+      assert.ok(performance.now() - start < 10_000)
       removePosition(tree, {force: true})
 
       assert.deepEqual(tree, {
         type: 'root',
         children: [{type: 'paragraph', children}]
       })
+    }
+  )
+
+  await t.test(
+    'should serialize many empty attention next to each other in linear time',
+    async function () {
+      /** @type {Array<PhrasingContent>} */
+      const children = []
+      let index = -1
+
+      while (++index < 2000) {
+        children.push(
+          {type: 'emphasis', children: []},
+          {type: 'strong', children: []}
+        )
+      }
+
+      // Quadratic serializing takes minutes.
+      const start = performance.now()
+      const value = to({type: 'paragraph', children})
+      assert.ok(performance.now() - start < 10_000)
+      assert.equal(value, '*'.repeat(12_000) + '\n')
+    }
+  )
+
+  await t.test(
+    'should serialize attention around empty attention',
+    async function () {
+      assert.equal(
+        to({
+          type: 'paragraph',
+          children: [
+            {
+              type: 'emphasis',
+              children: [
+                {type: 'text', value: 'a'},
+                {type: 'strong', children: []}
+              ]
+            }
+          ]
+        }),
+        '*a*****\n'
+      )
     }
   )
 })
