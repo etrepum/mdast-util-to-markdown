@@ -6552,6 +6552,25 @@ test('attention', async function (t) {
         }),
         '**_.**a.**__.___**\n'
       )
+
+      assert.equal(
+        to({
+          type: 'paragraph',
+          children: [
+            {
+              type: 'emphasis',
+              children: [
+                {type: 'text', value: '.'},
+                {type: 'strong', children: [{type: 'text', value: ' '}]},
+                {type: 'strong', children: [{type: 'text', value: 'a'}]},
+                {type: 'emphasis', children: [{type: 'text', value: '.'}]}
+              ]
+            },
+            {type: 'text', value: '.'}
+          ]
+        }),
+        '*.**&#x20;****a***.**.\n'
+      )
     }
   )
 })
