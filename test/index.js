@@ -6420,6 +6420,40 @@ test('attention', async function (t) {
       )
     }, /Cannot serialize `delete` as attention with `1\.5` as size, expected positive integer/)
   })
+
+  await t.test(
+    'should serialize many runs of attention next to each other',
+    async function () {
+      // Each choice of markers only changes the runs around it,
+      // so this takes as long as its size, not its square.
+      /** @type {Array<PhrasingContent>} */
+      const children = []
+      let index = -1
+
+      while (++index < 2000) {
+        const a = index % 2 ? '.' : 'a'
+        const b = index % 2 ? 'a' : '.'
+        children.push(
+          {type: 'strong', children: [{type: 'text', value: a}]},
+          {
+            type: 'emphasis',
+            children: [
+              {type: 'text', value: b},
+              {type: 'strong', children: [{type: 'text', value: a}]}
+            ]
+          }
+        )
+      }
+
+      const tree = from(to({type: 'paragraph', children}))
+      removePosition(tree, {force: true})
+
+      assert.deepEqual(tree, {
+        type: 'root',
+        children: [{type: 'paragraph', children}]
+      })
+    }
+  )
 })
 
 test('roundtrip attention', async function (t) {
