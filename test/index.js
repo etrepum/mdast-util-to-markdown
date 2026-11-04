@@ -15,6 +15,7 @@
 
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import {setTimeout as wait} from 'node:timers/promises'
 import {removePosition} from 'unist-util-remove-position'
 import {fromMarkdown as from} from 'mdast-util-from-markdown'
 import {toMarkdown as to} from 'mdast-util-to-markdown'
@@ -6435,6 +6436,9 @@ test('attention', async function (t) {
         type: 'root',
         children: [{type: 'paragraph', children}]
       })
+
+      // `node:test` times out once the event loop runs.
+      await wait()
     }
   )
 
@@ -6466,6 +6470,9 @@ test('attention', async function (t) {
         type: 'root',
         children: [{type: 'paragraph', children: nested}]
       })
+
+      // `node:test` times out once the event loop runs.
+      await wait()
     }
   )
 
@@ -6529,6 +6536,9 @@ test('attention', async function (t) {
         ),
         '~.~*.*'.repeat(2000) + '\n'
       )
+
+      // `node:test` times out once the event loop runs.
+      await wait()
     }
   )
 
@@ -6550,6 +6560,9 @@ test('attention', async function (t) {
 
       const value = to({type: 'paragraph', children})
       assert.equal(value, '*'.repeat(12_000) + '\n')
+
+      // `node:test` times out once the event loop runs.
+      await wait()
     }
   )
 
@@ -6636,6 +6649,9 @@ test('attention', async function (t) {
           '&#x61;.'
         ).repeat(500) + '\n'
       )
+
+      // `node:test` times out once the event loop runs.
+      await wait()
     }
   )
 
