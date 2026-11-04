@@ -6489,6 +6489,17 @@ test('attention', async function (t) {
         to({type: 'paragraph', children}),
         '*a*_a_'.repeat(2000) + '\n'
       )
+      assert.equal(
+        to({
+          type: 'paragraph',
+          children: [...children, {type: 'text', value: '.'}]
+        }),
+        '*a*_a_'.repeat(2000) + '.\n'
+      )
+      assert.equal(
+        to({type: 'paragraph', children: [{type: 'strong', children}]}),
+        '__' + '*a*_a_'.repeat(2000) + '__\n'
+      )
     }
   )
 
@@ -6678,6 +6689,34 @@ test('attention', async function (t) {
           ]
         }),
         '*****&#x20;***&#x20;****&#x61;****a**  &#x20;\n'
+      )
+
+      // A try that pairs past where pairing was known.
+      assert.equal(
+        to({
+          type: 'paragraph',
+          children: [
+            {
+              type: 'strong',
+              children: [
+                {type: 'text', value: 'a'},
+                {type: 'emphasis', children: [{type: 'text', value: 'a'}]}
+              ]
+            },
+            {
+              type: 'emphasis',
+              children: [
+                {
+                  type: 'strong',
+                  children: [
+                    {type: 'strong', children: [{type: 'text', value: 'a'}]}
+                  ]
+                }
+              ]
+            }
+          ]
+        }),
+        '**a*a***_**__a__**_\n'
       )
     }
   )
