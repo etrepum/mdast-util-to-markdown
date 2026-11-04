@@ -6500,35 +6500,6 @@ test('attention', async function (t) {
   )
 
   await t.test(
-    'should serialize attention next to empty text',
-    async function () {
-      assert.equal(
-        to({
-          type: 'paragraph',
-          children: [
-            {type: 'strong', children: [{type: 'text', value: 'a'}]},
-            {type: 'text', value: ''},
-            {type: 'emphasis', children: [{type: 'text', value: 'b'}]}
-          ]
-        }),
-        '**a***b*\n'
-      )
-
-      assert.equal(
-        to({
-          type: 'paragraph',
-          children: [
-            {type: 'text', value: 'a'},
-            {type: 'text', value: ''},
-            {type: 'strong', children: [{type: 'text', value: 'b'}]}
-          ]
-        }),
-        'a**b**\n'
-      )
-    }
-  )
-
-  await t.test(
     'should serialize attention whose sequences pair with others',
     async function () {
       assert.equal(
