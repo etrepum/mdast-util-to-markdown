@@ -6500,6 +6500,35 @@ test('attention', async function (t) {
         to({type: 'paragraph', children: [{type: 'strong', children}]}),
         '__' + '*a*_a_'.repeat(2000) + '__\n'
       )
+
+      /** @type {Array<PhrasingContent>} */
+      const spaced = []
+      index = -1
+
+      while (++index < 4000) {
+        spaced.push({type: 'emphasis', children: [{type: 'text', value: 'a '}]})
+      }
+
+      assert.equal(
+        to({type: 'paragraph', children: spaced}),
+        '*a&#x20;*_a&#x20;_'.repeat(2000) + '\n'
+      )
+
+      /** @type {Array<PhrasingContent>} */
+      const deletes = []
+      index = -1
+
+      while (++index < 4000) {
+        deletes.push({type: 'delete', children: [{type: 'text', value: '.'}]})
+      }
+
+      assert.equal(
+        to(
+          {type: 'paragraph', children: deletes},
+          {handlers: {delete: attention(['~', '*'], [1, 2])}}
+        ),
+        '~.~*.*'.repeat(2000) + '\n'
+      )
     }
   )
 
@@ -6751,6 +6780,56 @@ test('attention', async function (t) {
           {emphasis: '*', strong: '_'}
         ),
         '*_\\*\\___. \\_a___*&#x61;.\n'
+      )
+
+      // A try that patches up to the snapshot before a run.
+      assert.equal(
+        to(
+          {
+            type: 'paragraph',
+            children: [
+              {type: 'delete', children: [{type: 'text', value: ' '}]},
+              {
+                type: 'delete',
+                children: [
+                  {type: 'strong', children: [{type: 'text', value: '~'}]}
+                ]
+              }
+            ]
+          },
+          {handlers: {delete: attention(['*', '~'], [3])}}
+        ),
+        '***&#x20;********~*****\n'
+      )
+
+      // Runs of other markers that look at all runs while they are smaller.
+      assert.equal(
+        to(
+          {
+            type: 'paragraph',
+            children: [
+              {
+                type: 'delete',
+                children: [
+                  {
+                    type: 'delete',
+                    children: [
+                      {type: 'text', value: '_'},
+                      {type: 'emphasis', children: [{type: 'text', value: '_'}]}
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            handlers: {
+              delete: attention(['+'], [2, 1]),
+              emphasis: attention(['+', '~'], [1, 2])
+            }
+          }
+        ),
+        '++++\\_+\\_+++++\n'
       )
     }
   )
