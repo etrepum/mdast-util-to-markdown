@@ -6571,7 +6571,7 @@ test('attention', async function (t) {
         '***&#x20;*.**\n'
       )
 
-      // A run that opens again after it was dropped.
+      // A run that is dropped, then opens again before where it was dropped.
       assert.equal(
         to({
           type: 'paragraph',
