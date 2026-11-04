@@ -6537,6 +6537,30 @@ test('attention', async function (t) {
         '~.~*.*'.repeat(2000) + '\n'
       )
 
+      /** @type {Array<PhrasingContent>} */
+      const motifs = []
+      index = -1
+
+      // A mistake after each try that is only known at the end.
+      while (++index < 4000) {
+        motifs.push(
+          {type: 'text', value: ' a'},
+          {
+            type: 'emphasis',
+            children: [
+              {type: 'text', value: '.'},
+              {type: 'text', value: ' '}
+            ]
+          },
+          {type: 'emphasis', children: [{type: 'text', value: 'a.'}]}
+        )
+      }
+
+      assert.equal(
+        to({type: 'paragraph', children: motifs}),
+        '&#x20;&#x61;*.&#x20;*_a._' + ' &#x61;*.&#x20;*_a._'.repeat(3999) + '\n'
+      )
+
       // `node:test` times out once the event loop runs.
       await wait()
     }
