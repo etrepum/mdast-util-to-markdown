@@ -6718,6 +6718,40 @@ test('attention', async function (t) {
         }),
         '**a*a***_**__a__**_\n'
       )
+
+      // A try that stops after a run, before a snapshot.
+      assert.equal(
+        to(
+          {
+            type: 'paragraph',
+            children: [
+              {
+                type: 'emphasis',
+                children: [
+                  {
+                    type: 'emphasis',
+                    children: [
+                      {type: 'text', value: '*_'},
+                      {
+                        type: 'strong',
+                        children: [
+                          {type: 'text', value: '. '},
+                          {type: 'text', value: '_'},
+                          {type: 'text', value: 'a'}
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {type: 'text', value: 'a'},
+              {type: 'text', value: '.'}
+            ]
+          },
+          {emphasis: '*', strong: '_'}
+        ),
+        '*_\\*\\___. \\_a___*&#x61;.\n'
+      )
     }
   )
 
