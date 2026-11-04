@@ -6454,6 +6454,41 @@ test('attention', async function (t) {
         type: 'root',
         children: [{type: 'paragraph', children: [{type: 'strong', children}]}]
       })
+
+      /** @type {Array<PhrasingContent>} */
+      const nested = [
+        {type: 'emphasis', children: [{type: 'strong', children}]}
+      ]
+      const nestedTree = from(to({type: 'paragraph', children: nested}))
+      removePosition(nestedTree, {force: true})
+
+      assert.deepEqual(nestedTree, {
+        type: 'root',
+        children: [{type: 'paragraph', children: nested}]
+      })
+    }
+  )
+
+  await t.test(
+    'should serialize much attention next to each other in linear time',
+    // Quadratic serializing takes minutes.
+    {timeout: 30_000},
+    async function () {
+      /** @type {Array<PhrasingContent>} */
+      const children = []
+      let index = -1
+
+      while (++index < 4000) {
+        children.push({
+          type: 'emphasis',
+          children: [{type: 'text', value: 'a'}]
+        })
+      }
+
+      assert.equal(
+        to({type: 'paragraph', children}),
+        '*a*_a_'.repeat(2000) + '\n'
+      )
     }
   )
 
@@ -6487,6 +6522,8 @@ test('attention', async function (t) {
       const closed = []
       /** @type {Array<PhrasingContent>} */
       const open = []
+      /** @type {Array<PhrasingContent>} */
+      const texts = []
       let index = -1
 
       while (++index < 2000) {
@@ -6513,7 +6550,8 @@ test('attention', async function (t) {
           {type: 'text', value: '.'},
           {type: 'text', value: ' '}
         )
-        open.push(
+        /** @type {Array<PhrasingContent>} */
+        const motif = [
           {
             type: 'strong',
             children: [
@@ -6530,7 +6568,14 @@ test('attention', async function (t) {
               {type: 'text', value: ' '}
             ]
           }
-        )
+        ]
+        open.push(...motif)
+        texts.push(...motif)
+
+        // Text that pairs with runs left open before.
+        if (index % 4 === 3) {
+          texts.push({type: 'text', value: 'a'}, {type: 'text', value: '.'})
+        }
       }
 
       assert.equal(
@@ -6542,6 +6587,14 @@ test('attention', async function (t) {
         '**&#x20;*.***..**a&#x20;**' +
           '__&#x20;*.*__..**a&#x20;**'.repeat(1999) +
           '\n'
+      )
+      assert.equal(
+        to({type: 'paragraph', children: texts}),
+        (
+          '**&#x20;*.***..**a&#x20;**' +
+          '__&#x20;*.*__..**a&#x20;**'.repeat(3) +
+          '&#x61;.'
+        ).repeat(500) + '\n'
       )
     }
   )
@@ -6598,6 +6651,33 @@ test('attention', async function (t) {
           ]
         }),
         '**_*&#x20;*_**__&#x20;__****a****&#x61;\n'
+      )
+
+      // Runs left open that nothing pairs with again until the end.
+      assert.equal(
+        to({
+          type: 'paragraph',
+          children: [
+            {
+              type: 'strong',
+              children: [
+                {
+                  type: 'strong',
+                  children: [
+                    {type: 'emphasis', children: [{type: 'text', value: ' '}]},
+                    {type: 'strong', children: [{type: 'text', value: ' '}]}
+                  ]
+                },
+                {type: 'text', value: 'a'}
+              ]
+            },
+            {type: 'strong', children: [{type: 'text', value: 'a'}]},
+            {type: 'text', value: ' '},
+            {type: 'text', value: ' '},
+            {type: 'text', value: ' '}
+          ]
+        }),
+        '*****&#x20;***&#x20;****&#x61;****a**  &#x20;\n'
       )
     }
   )
