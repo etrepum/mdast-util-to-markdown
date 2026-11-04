@@ -6479,6 +6479,74 @@ test('attention', async function (t) {
   )
 
   await t.test(
+    'should serialize many runs of attention left open in linear time',
+    // Quadratic serializing takes minutes.
+    {timeout: 30_000},
+    async function () {
+      /** @type {Array<PhrasingContent>} */
+      const closed = []
+      /** @type {Array<PhrasingContent>} */
+      const open = []
+      let index = -1
+
+      while (++index < 2000) {
+        closed.push(
+          {
+            type: 'strong',
+            children: [
+              {
+                type: 'strong',
+                children: [
+                  {
+                    type: 'strong',
+                    children: [
+                      {type: 'text', value: 'a'},
+                      {type: 'text', value: '.'}
+                    ]
+                  },
+                  {type: 'text', value: '.'}
+                ]
+              },
+              {type: 'text', value: 'a'}
+            ]
+          },
+          {type: 'text', value: '.'},
+          {type: 'text', value: ' '}
+        )
+        open.push(
+          {
+            type: 'strong',
+            children: [
+              {type: 'text', value: ' '},
+              {type: 'emphasis', children: [{type: 'text', value: '.'}]}
+            ]
+          },
+          {type: 'text', value: '.'},
+          {type: 'text', value: '.'},
+          {
+            type: 'strong',
+            children: [
+              {type: 'text', value: 'a'},
+              {type: 'text', value: ' '}
+            ]
+          }
+        )
+      }
+
+      assert.equal(
+        to({type: 'paragraph', children: closed}),
+        '**__**a.**.__&#x61;**. '.repeat(2000).slice(0, -1) + '&#x20;\n'
+      )
+      assert.equal(
+        to({type: 'paragraph', children: open}),
+        '**&#x20;*.***..**a&#x20;**' +
+          '__&#x20;*.*__..**a&#x20;**'.repeat(1999) +
+          '\n'
+      )
+    }
+  )
+
+  await t.test(
     'should serialize attention around empty attention',
     async function () {
       assert.equal(
