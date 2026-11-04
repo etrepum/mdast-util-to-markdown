@@ -6547,6 +6547,62 @@ test('attention', async function (t) {
   )
 
   await t.test(
+    'should serialize attention left open while trying other sequences',
+    async function () {
+      // A try that drops runs left open, which is then undone.
+      assert.equal(
+        to({
+          type: 'paragraph',
+          children: [
+            {
+              type: 'emphasis',
+              children: [
+                {
+                  type: 'emphasis',
+                  children: [
+                    {type: 'emphasis', children: [{type: 'text', value: ' '}]},
+                    {type: 'text', value: '.'}
+                  ]
+                }
+              ]
+            }
+          ]
+        }),
+        '***&#x20;*.**\n'
+      )
+
+      // A run that opens again after it was dropped.
+      assert.equal(
+        to({
+          type: 'paragraph',
+          children: [
+            {
+              type: 'strong',
+              children: [
+                {
+                  type: 'emphasis',
+                  children: [
+                    {type: 'emphasis', children: [{type: 'text', value: ' '}]}
+                  ]
+                }
+              ]
+            },
+            {type: 'strong', children: [{type: 'text', value: ' '}]},
+            {
+              type: 'strong',
+              children: [
+                {type: 'strong', children: [{type: 'text', value: 'a'}]}
+              ]
+            },
+            {type: 'text', value: 'a'}
+          ]
+        }),
+        '**_*&#x20;*_**__&#x20;__****a****&#x61;\n'
+      )
+    }
+  )
+
+  await t.test(
     'should serialize attention around empty attention',
     async function () {
       assert.equal(
