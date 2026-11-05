@@ -6593,6 +6593,40 @@ test('attention', async function (t) {
   )
 
   await t.test(
+    'should pair as before only up to a later change',
+    async function () {
+      // Changing `*` of the emphasis leaves what is open at the second `**`
+      // as it was, but the `*` after it changes too.
+      assert.equal(
+        to({
+          type: 'paragraph',
+          children: [
+            {type: 'text', value: 'a'},
+            {
+              type: 'strong',
+              children: [
+                {type: 'text', value: '_'},
+                {type: 'strong', children: [{type: 'text', value: 'a'}]},
+                {
+                  type: 'emphasis',
+                  children: [
+                    {type: 'text', value: 'a'},
+                    {
+                      type: 'strong',
+                      children: [{type: 'inlineCode', value: 'x'}]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }),
+        '&#x61;__\\_**a**_&#x61;**`x`**___\n'
+      )
+    }
+  )
+
+  await t.test(
     'should serialize touching attention in few and in more tokens',
     async function () {
       /** @type {Array<PhrasingContent>} */
