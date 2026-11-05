@@ -6703,30 +6703,34 @@ test('attention', async function (t) {
     }
   )
 
-  await t.test(
-    'should serialize touching attention in few and in more tokens',
-    async function () {
-      /** @type {Array<PhrasingContent>} */
-      const children = []
+  await t.test('should check runs that many closers skip', async function () {
+    /** @type {Array<PhrasingContent>} */
+    const children = []
 
-      // 3 tokens each: 63 tokens, then 66.
-      while (children.length < 22) {
-        children.push({
-          type: 'emphasis',
-          children: [{type: 'text', value: 'a'}]
-        })
-      }
-
-      assert.equal(
-        to({type: 'paragraph', children: children.slice(0, 21)}),
-        '*a*_a_'.repeat(10) + '*a*\n'
-      )
-      assert.equal(
-        to({type: 'paragraph', children}),
-        '*a*_a_'.repeat(11) + '\n'
+    // Each closer of emphasis looks at all strong before it.
+    while (children.length < 400) {
+      children.push(
+        {type: 'strong', children: [{type: 'text', value: ' a'}]},
+        {
+          type: 'strong',
+          children: [
+            {
+              type: 'strong',
+              children: [
+                {type: 'text', value: 'a '},
+                {type: 'emphasis', children: [{type: 'text', value: '*'}]}
+              ]
+            }
+          ]
+        }
       )
     }
-  )
+
+    assert.equal(
+      to({type: 'paragraph', children}),
+      '**&#x20;a**__**a *\\****__'.repeat(199) + '**&#x20;a******a *\\******\n'
+    )
+  })
 
   await t.test(
     'should serialize many runs of attention between strings in linear time',
