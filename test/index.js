@@ -6665,6 +6665,45 @@ test('attention', async function (t) {
   )
 
   await t.test(
+    'should keep the first mistake where a check pairs as a try did',
+    async function () {
+      assert.equal(
+        to({
+          type: 'paragraph',
+          children: [
+            {type: 'text', value: '.a'},
+            {type: 'emphasis', children: [{type: 'text', value: 'x y'}]},
+            {
+              type: 'emphasis',
+              children: [
+                {
+                  type: 'emphasis',
+                  children: [
+                    {type: 'strong', children: [{type: 'text', value: 'a.'}]},
+                    {type: 'text', value: 'x y'}
+                  ]
+                }
+              ]
+            },
+            {
+              type: 'strong',
+              children: [
+                {
+                  type: 'strong',
+                  children: [
+                    {type: 'strong', children: [{type: 'text', value: ' '}]}
+                  ]
+                }
+              ]
+            }
+          ]
+        }),
+        '.a*x y*_*__a.__&#x78; y*_******&#x20;******\n'
+      )
+    }
+  )
+
+  await t.test(
     'should serialize touching attention in few and in more tokens',
     async function () {
       /** @type {Array<PhrasingContent>} */
