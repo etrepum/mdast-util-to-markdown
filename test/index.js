@@ -6680,6 +6680,69 @@ test('attention', async function (t) {
   )
 
   await t.test(
+    'should serialize runs that pair deep and attention that never forms in linear time',
+    // Quadratic serializing takes minutes.
+    {timeout: 30_000},
+    async function () {
+      /** @type {Array<PhrasingContent>} */
+      const deletes = []
+      /** @type {Array<PhrasingContent>} */
+      const wrapped = []
+      let index = -1
+
+      while (++index < 2000) {
+        deletes.push({
+          type: 'delete',
+          children: [{type: 'text', value: index % 5 ? 'a.' : '. '}]
+        })
+      }
+
+      index = -1
+
+      while (++index < 1000) {
+        const a = index % 2 ? '.' : 'a'
+        const b = index % 2 ? 'a' : '.'
+        wrapped.push(
+          {type: 'strong', children: [{type: 'text', value: a}]},
+          {
+            type: 'emphasis',
+            children: [
+              {type: 'text', value: b},
+              {type: 'strong', children: [{type: 'text', value: a}]}
+            ]
+          }
+        )
+      }
+
+      // Runs that stay open below runs that pair deep.
+      assert.equal(
+        to(
+          {type: 'paragraph', children: deletes},
+          {handlers: {delete: attention(['~', '*'], [2, 1])}}
+        ),
+        (
+          '~~.&#x20;~~**a.**~~a.~~**a.**~~a.~~' +
+          '**.&#x20;**~~a.~~**a.**~~a.~~**a.**'
+        ).repeat(200) + '\n'
+      )
+      // Attention that never forms, around attention that does.
+      assert.equal(
+        to(
+          {
+            type: 'paragraph',
+            children: [{type: 'delete', children: wrapped}]
+          },
+          {handlers: {delete: attention(['*'], [3])}}
+        ),
+        '*****a***.**a*****.***&#x61;**.'.repeat(500) + '******\n'
+      )
+
+      // `node:test` times out once the event loop runs.
+      await wait()
+    }
+  )
+
+  await t.test(
     'should serialize attention left open while trying other sequences',
     async function () {
       // A try that drops runs left open, which is then undone.
@@ -7008,6 +7071,29 @@ test('attention', async function (t) {
           ]
         }),
         '*.*_&#x20;_*****__&#x61;__&#x61;*****&#x61;&#x61;_*\\_.***__**a..**&#x20;__&#x20;**_\n'
+      )
+
+      // Runs that are the same after runs that differ.
+      assert.equal(
+        to({
+          type: 'paragraph',
+          children: [
+            {
+              type: 'emphasis',
+              children: [
+                {
+                  type: 'emphasis',
+                  children: [{type: 'inlineCode', value: 'x'}]
+                },
+                {type: 'text', value: 'a'},
+                {type: 'emphasis', children: [{type: 'inlineCode', value: 'x'}]}
+              ]
+            },
+            {type: 'strong', children: [{type: 'text', value: '_'}]},
+            {type: 'emphasis', children: [{type: 'text', value: '_'}]}
+          ]
+        }),
+        '_*`x`*&#x61;*`x`*_**\\_***\\_*\n'
       )
 
       // Runs of other markers that look at all runs while they are smaller.
