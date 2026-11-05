@@ -6593,6 +6593,42 @@ test('attention', async function (t) {
   )
 
   await t.test(
+    'should serialize many runs of attention between strings in linear time',
+    // Quadratic serializing takes minutes.
+    {timeout: 30_000},
+    async function () {
+      /** @type {Array<PhrasingContent>} */
+      const children = []
+      let index = -1
+
+      // A mistake after each string, and runs that close in the middle.
+      while (++index < 2000) {
+        children.push(
+          {type: 'text', value: 'x'},
+          {
+            type: 'emphasis',
+            children: [{type: 'strong', children: [{type: 'text', value: 'a'}]}]
+          },
+          {type: 'text', value: 'y '},
+          {type: 'emphasis', children: [{type: 'text', value: 'b'}]},
+          {type: 'emphasis', children: [{type: 'text', value: 'c'}]},
+          {type: 'text', value: ' '}
+        )
+      }
+
+      const unit = '&#x78;***a***&#x79; *b*_c_ '
+
+      assert.equal(
+        to({type: 'paragraph', children}),
+        unit.repeat(1999) + unit.slice(0, -1) + '&#x20;\n'
+      )
+
+      // `node:test` times out once the event loop runs.
+      await wait()
+    }
+  )
+
+  await t.test(
     'should serialize many empty attention next to each other in linear time',
     // Quadratic serializing takes minutes.
     {timeout: 30_000},
