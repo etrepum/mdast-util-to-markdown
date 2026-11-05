@@ -12,7 +12,6 @@ const xoConfig = [
       'jsdoc/valid-types': 'off',
       'max-depth': 'off',
       'max-params': 'off',
-      'no-bitwise': 'off',
       'no-shadow': 'off',
       'prefer-destructuring': 'off',
       'regexp/no-obscure-range': 'off',
@@ -59,6 +58,10 @@ const xoConfig = [
       'package-json/sort-files': 'off',
       'package-json/sort-properties': 'off'
     }
+  },
+  {
+    files: ['lib/util/container-phrasing.js'],
+    rules: {'no-bitwise': 'off'}
   },
   {
     files: ['test/**/*.js'],

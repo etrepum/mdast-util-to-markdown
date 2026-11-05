@@ -6362,6 +6362,32 @@ test('attention', async function (t) {
     }
   )
 
+  await t.test(
+    'should pair runs of extensions of the same size only, also if large',
+    async function () {
+      assert.equal(
+        to(
+          {
+            type: 'paragraph',
+            children: [
+              {type: 'text', value: ' '},
+              {
+                type: 'delete',
+                children: [
+                  {type: 'text', value: '.a'},
+                  {type: 'delete', children: [{type: 'text', value: 'a'}]},
+                  {type: 'text', value: '.'}
+                ]
+              }
+            ]
+          },
+          {handlers: {delete: attention(['~'], [1, 31])}}
+        ),
+        '&#x20;~.a' + '~'.repeat(31) + 'a' + '~'.repeat(31) + '.~\n'
+      )
+    }
+  )
+
   await t.test('should throw w/o `markers`', async function () {
     assert.throws(function () {
       to(
