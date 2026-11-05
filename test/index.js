@@ -7597,6 +7597,88 @@ test('position (output)', async function (t) {
       assert.deepEqual(positions.at(-1), {line: 1, column: 10})
     }
   )
+
+  await t.test(
+    'should track output positions after html that follows a line ending and empty values, html, or attention',
+    async function () {
+      /** @type {Array<unknown>} */
+      const positions = []
+      const options = {
+        handlers: {
+          /**
+           * Handle for unknown nodes.
+           *
+           * @type {Handle}
+           * @param {{value: string}} node
+           *   Node to handle.
+           */
+          unknown(node, _2, _3, info) {
+            positions.push(info.now)
+            return node.value
+          }
+        }
+      }
+
+      assert.equal(
+        to(
+          {
+            type: 'paragraph',
+            children: [
+              {type: 'text', value: 'a\n'},
+              // @ts-expect-error: If you want to support custom nodes in types,
+              // please see `@types/mdast` on how to do that.
+              {type: 'unknown', value: ''},
+              {type: 'html', value: '<div>'},
+              // @ts-expect-error: custom node.
+              {type: 'unknown', value: 'x'}
+            ]
+          },
+          options
+        ),
+        'a <div>x\n'
+      )
+
+      assert.deepEqual(positions.at(-1), {line: 1, column: 8})
+
+      assert.equal(
+        to(
+          {
+            type: 'paragraph',
+            children: [
+              {type: 'text', value: 'a'},
+              {type: 'html', value: '<b>\n'},
+              {type: 'html', value: '<div>'},
+              // @ts-expect-error: custom node.
+              {type: 'unknown', value: 'x'}
+            ]
+          },
+          options
+        ),
+        'a<b> <div>x\n'
+      )
+
+      assert.deepEqual(positions.at(-1), {line: 1, column: 11})
+
+      assert.equal(
+        to(
+          {
+            type: 'paragraph',
+            children: [
+              {type: 'text', value: 'a\n'},
+              {type: 'emphasis', children: [{type: 'text', value: 'b'}]},
+              {type: 'html', value: '<div>'},
+              // @ts-expect-error: custom node.
+              {type: 'unknown', value: 'x'}
+            ]
+          },
+          options
+        ),
+        'a\n*b*<div>x\n'
+      )
+
+      assert.deepEqual(positions.at(-1), {line: 2, column: 9})
+    }
+  )
 })
 
 /**
