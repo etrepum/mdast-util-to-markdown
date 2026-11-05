@@ -6842,6 +6842,174 @@ test('attention', async function (t) {
         '***&#x20;********~*****\n'
       )
 
+      // A try that pairs as before above runs that differ.
+      assert.equal(
+        to(
+          {
+            type: 'paragraph',
+            children: [
+              {
+                type: 'delete',
+                children: [
+                  {type: 'delete', children: [{type: 'text', value: ' '}]},
+                  {type: 'emphasis', children: [{type: 'text', value: '.'}]}
+                ]
+              }
+            ]
+          },
+          {handlers: {delete: attention(['*', '_'], [3])}}
+        ),
+        '******&#x20;****.****\n'
+      )
+
+      // Pairing after a try as a pass before it did.
+      assert.equal(
+        to({
+          type: 'paragraph',
+          children: [
+            {
+              type: 'emphasis',
+              children: [
+                {type: 'strong', children: [{type: 'text', value: ' '}]}
+              ]
+            },
+            {
+              type: 'emphasis',
+              children: [
+                {type: 'strong', children: [{type: 'text', value: 'a'}]},
+                {type: 'strong', children: [{type: 'text', value: ' '}]},
+                {type: 'text', value: 'a'}
+              ]
+            },
+            {type: 'emphasis', children: [{type: 'text', value: 'a'}]},
+            {type: 'text', value: ' '}
+          ]
+        }),
+        '***&#x20;***_**a**__&#x20;__&#x61;_*a*&#x20;\n'
+      )
+
+      // What pairing as a pass before decided is a mistake.
+      assert.equal(
+        to({
+          type: 'paragraph',
+          children: [
+            {type: 'text', value: '.'},
+            {
+              type: 'strong',
+              children: [
+                {type: 'emphasis', children: [{type: 'text', value: '.'}]},
+                {type: 'emphasis', children: [{type: 'text', value: '.a'}]},
+                {
+                  type: 'strong',
+                  children: [
+                    {type: 'strong', children: [{type: 'text', value: 'a'}]}
+                  ]
+                }
+              ]
+            },
+            {type: 'text', value: '.'},
+            {
+              type: 'strong',
+              children: [
+                {type: 'strong', children: [{type: 'text', value: 'a'}]},
+                {type: 'text', value: 'a'},
+                {type: 'text', value: '.'}
+              ]
+            },
+            {
+              type: 'strong',
+              children: [
+                {type: 'text', value: 'a'},
+                {type: 'text', value: '.'}
+              ]
+            },
+            {
+              type: 'strong',
+              children: [
+                {type: 'emphasis', children: [{type: 'text', value: '.'}]},
+                {type: 'emphasis', children: [{type: 'text', value: '.a'}]},
+                {
+                  type: 'strong',
+                  children: [
+                    {type: 'strong', children: [{type: 'text', value: 'a'}]}
+                  ]
+                }
+              ]
+            },
+            {type: 'text', value: ' '},
+            {type: 'emphasis', children: [{type: 'text', value: '.'}]},
+            {type: 'strong', children: [{type: 'text', value: 'a'}]}
+          ]
+        }),
+        '.***.*_.a_****a******.__**a**a.__**a.*****.*_.a_****a****** *.*__a__\n'
+      )
+
+      // Patches to patches that drop runs.
+      assert.equal(
+        to({
+          type: 'paragraph',
+          children: [
+            {type: 'emphasis', children: [{type: 'text', value: '.'}]},
+            {type: 'emphasis', children: [{type: 'text', value: ' '}]},
+            {
+              type: 'emphasis',
+              children: [
+                {
+                  type: 'strong',
+                  children: [
+                    {
+                      type: 'strong',
+                      children: [
+                        {
+                          type: 'strong',
+                          children: [{type: 'text', value: 'a'}]
+                        },
+                        {type: 'text', value: 'a'}
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {type: 'text', value: 'a'},
+            {type: 'text', value: 'a'},
+            {
+              type: 'emphasis',
+              children: [
+                {
+                  type: 'emphasis',
+                  children: [
+                    {type: 'text', value: '_'},
+                    {type: 'text', value: '.'}
+                  ]
+                },
+                {
+                  type: 'strong',
+                  children: [
+                    {
+                      type: 'strong',
+                      children: [
+                        {
+                          type: 'strong',
+                          children: [
+                            {type: 'text', value: 'a'},
+                            {type: 'text', value: '.'},
+                            {type: 'text', value: '.'}
+                          ]
+                        },
+                        {type: 'text', value: ' '}
+                      ]
+                    },
+                    {type: 'text', value: ' '}
+                  ]
+                }
+              ]
+            }
+          ]
+        }),
+        '*.*_&#x20;_*****__&#x61;__&#x61;*****&#x61;&#x61;_*\\_.***__**a..**&#x20;__&#x20;**_\n'
+      )
+
       // Runs of other markers that look at all runs while they are smaller.
       assert.equal(
         to(
