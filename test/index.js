@@ -6593,6 +6593,31 @@ test('attention', async function (t) {
   )
 
   await t.test(
+    'should serialize touching attention in few and in more tokens',
+    async function () {
+      /** @type {Array<PhrasingContent>} */
+      const children = []
+
+      // 3 tokens each: 63 tokens, then 66.
+      while (children.length < 22) {
+        children.push({
+          type: 'emphasis',
+          children: [{type: 'text', value: 'a'}]
+        })
+      }
+
+      assert.equal(
+        to({type: 'paragraph', children: children.slice(0, 21)}),
+        '*a*_a_'.repeat(10) + '*a*\n'
+      )
+      assert.equal(
+        to({type: 'paragraph', children}),
+        '*a*_a_'.repeat(11) + '\n'
+      )
+    }
+  )
+
+  await t.test(
     'should serialize many runs of attention between strings in linear time',
     // Quadratic serializing takes minutes.
     {timeout: 30_000},
