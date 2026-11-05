@@ -6427,7 +6427,7 @@ test('attention', async function (t) {
     // Quadratic serializing takes minutes.
     {timeout: 30_000},
     async function () {
-      const children = runs()
+      const children = runs(200)
 
       const tree = from(to({type: 'paragraph', children}))
       removePosition(tree, {force: true})
@@ -6436,6 +6436,14 @@ test('attention', async function (t) {
         type: 'root',
         children: [{type: 'paragraph', children}]
       })
+
+      // Parsing many runs back would take most of the time.
+      assert.equal(
+        to({type: 'paragraph', children: runs(2000)}),
+        '**a**_.**a**_**.***&#x61;**.***' +
+          '__a__*.**a***__.__*&#x61;**.***'.repeat(999) +
+          '\n'
+      )
 
       // `node:test` times out once the event loop runs.
       await wait()
@@ -6447,7 +6455,7 @@ test('attention', async function (t) {
     // Quadratic serializing takes minutes.
     {timeout: 30_000},
     async function () {
-      const children = runs()
+      const children = runs(200)
 
       const tree = from(
         to({type: 'paragraph', children: [{type: 'strong', children}]})
@@ -6470,6 +6478,24 @@ test('attention', async function (t) {
         type: 'root',
         children: [{type: 'paragraph', children: nested}]
       })
+
+      // Parsing many runs back would take most of the time.
+      const many = runs(2000)
+      const unit = '__a__*.__a__***.***&#x61;**.***'
+
+      assert.equal(
+        to({type: 'paragraph', children: [{type: 'strong', children: many}]}),
+        '__**a**_.**a**_**.***&#x61;**.***' + unit.repeat(999) + '__\n'
+      )
+      assert.equal(
+        to({
+          type: 'paragraph',
+          children: [
+            {type: 'emphasis', children: [{type: 'strong', children: many}]}
+          ]
+        }),
+        '___' + unit.repeat(1000) + '___\n'
+      )
 
       // `node:test` times out once the event loop runs.
       await wait()
@@ -7650,18 +7676,20 @@ function createList(d) {
 }
 
 /**
- * Create many runs of attention next to each other,
+ * Create runs of attention next to each other,
  * where each one needs another sequence than the one before.
  *
+ * @param {number} count
+ *   Count of pairs of runs.
  * @returns {Array<PhrasingContent>}
  *   Phrasing.
  */
-function runs() {
+function runs(count) {
   /** @type {Array<PhrasingContent>} */
   const children = []
   let index = -1
 
-  while (++index < 2000) {
+  while (++index < count) {
     const a = index % 2 ? '.' : 'a'
     const b = index % 2 ? 'a' : '.'
     children.push(
