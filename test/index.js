@@ -6627,6 +6627,44 @@ test('attention', async function (t) {
   )
 
   await t.test(
+    'should keep how a run pairs where pairing is as before',
+    async function () {
+      assert.equal(
+        to({
+          type: 'paragraph',
+          children: [
+            {
+              type: 'emphasis',
+              children: [
+                {
+                  type: 'emphasis',
+                  children: [
+                    {
+                      type: 'emphasis',
+                      children: [{type: 'text', value: 'a_b'}]
+                    },
+                    {
+                      type: 'emphasis',
+                      children: [
+                        {
+                          type: 'strong',
+                          children: [{type: 'text', value: 'b* '}]
+                        },
+                        {type: 'text', value: '_a'}
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }),
+        '_*_a\\_b_***b\\*&#x20;**\\_a**_\n'
+      )
+    }
+  )
+
+  await t.test(
     'should serialize touching attention in few and in more tokens',
     async function () {
       /** @type {Array<PhrasingContent>} */
