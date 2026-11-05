@@ -12,6 +12,7 @@ const xoConfig = [
       'jsdoc/valid-types': 'off',
       'max-depth': 'off',
       'max-params': 'off',
+      'no-bitwise': 'off',
       'no-shadow': 'off',
       'prefer-destructuring': 'off',
       'regexp/no-obscure-range': 'off',
