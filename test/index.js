@@ -7480,6 +7480,97 @@ test('position (output)', async function (t) {
       '> a\n> *b*\n'
     )
   })
+
+  await t.test(
+    'should track output positions after nested attention',
+    async function () {
+      /** @type {Array<unknown>} */
+      const positions = []
+
+      assert.equal(
+        to(
+          {
+            type: 'paragraph',
+            children: [
+              {
+                type: 'emphasis',
+                children: [
+                  {type: 'strong', children: [{type: 'text', value: 'a'}]}
+                ]
+              },
+              // @ts-expect-error: If you want to support custom nodes in types,
+              // please see `@types/mdast` on how to do that.
+              {type: 'unknown'}
+            ]
+          },
+          {
+            handlers: {
+              /**
+               * Handle for unknown nodes.
+               *
+               * @type {Handle}
+               * @param {unknown} _
+               *   Node to handle.
+               */
+              unknown(_, _2, _3, info) {
+                positions.push(info.now)
+                return 'x'
+              }
+            }
+          }
+        ),
+        '***a***&#x78;\n'
+      )
+
+      assert.deepEqual(positions.at(-1), {line: 1, column: 8})
+    }
+  )
+
+  await t.test(
+    'should track output positions after html that follows a line ending',
+    async function () {
+      /** @type {Array<unknown>} */
+      const positions = []
+
+      assert.equal(
+        to(
+          {
+            type: 'paragraph',
+            children: [
+              {
+                type: 'emphasis',
+                children: [
+                  {type: 'text', value: 'a\n'},
+                  {type: 'html', value: '<div>'}
+                ]
+              },
+              // @ts-expect-error: If you want to support custom nodes in types,
+              // please see `@types/mdast` on how to do that.
+              {type: 'unknown'}
+            ]
+          },
+          {
+            handlers: {
+              /**
+               * Handle for unknown nodes.
+               *
+               * @type {Handle}
+               * @param {unknown} _
+               *   Node to handle.
+               */
+              unknown(_, _2, _3, info) {
+                positions.push(info.now)
+                return 'x'
+              }
+            }
+          }
+        ),
+        '*a <div>*&#x78;\n'
+      )
+
+      assert.deepEqual(positions.at(-1), {line: 1, column: 10})
+    }
+  )
 })
 
 /**
