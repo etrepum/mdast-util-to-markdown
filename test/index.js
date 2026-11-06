@@ -6691,6 +6691,51 @@ test('attention', async function (t) {
   )
 
   await t.test(
+    'should pair as another version around runs that differ from it',
+    async function () {
+      /** @type {Array<PhrasingContent>} */
+      const children = []
+
+      while (children.length < 6) {
+        children.push(
+          {
+            type: 'emphasis',
+            children: [
+              {type: 'text', value: 'a'},
+              {type: 'text', value: 'a'},
+              {
+                type: 'emphasis',
+                children: [
+                  {
+                    type: 'emphasis',
+                    children: [
+                      {type: 'text', value: 'a'},
+                      {type: 'text', value: 'a'}
+                    ]
+                  },
+                  {type: 'text', value: 'a'}
+                ]
+              }
+            ]
+          },
+          {
+            type: 'emphasis',
+            children: [
+              {type: 'emphasis', children: [{type: 'text', value: 'a'}]},
+              {type: 'text', value: 'a'}
+            ]
+          }
+        )
+      }
+
+      assert.equal(
+        to({type: 'paragraph', children}),
+        '*a&#x61;**aa*a****a*a*'.repeat(3) + '\n'
+      )
+    }
+  )
+
+  await t.test(
     'should keep the first mistake where a check pairs as a try did',
     async function () {
       assert.equal(
@@ -7027,6 +7072,114 @@ test('attention', async function (t) {
           ]
         }),
         '.***.*_.a_****a******.__**a**a.__**a.*****.*_.a_****a****** *.*__a__\n'
+      )
+
+      // Patches to patches that drop runs.
+      assert.equal(
+        to({
+          type: 'paragraph',
+          children: [
+            {type: 'emphasis', children: [{type: 'text', value: '.'}]},
+            {type: 'emphasis', children: [{type: 'text', value: ' '}]},
+            {
+              type: 'emphasis',
+              children: [
+                {
+                  type: 'strong',
+                  children: [
+                    {
+                      type: 'strong',
+                      children: [
+                        {
+                          type: 'strong',
+                          children: [{type: 'text', value: 'a'}]
+                        },
+                        {type: 'text', value: 'a'}
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {type: 'text', value: 'a'},
+            {type: 'text', value: 'a'},
+            {
+              type: 'emphasis',
+              children: [
+                {
+                  type: 'emphasis',
+                  children: [
+                    {type: 'text', value: '_'},
+                    {type: 'text', value: '.'}
+                  ]
+                },
+                {
+                  type: 'strong',
+                  children: [
+                    {
+                      type: 'strong',
+                      children: [
+                        {
+                          type: 'strong',
+                          children: [
+                            {type: 'text', value: 'a'},
+                            {type: 'text', value: '.'},
+                            {type: 'text', value: '.'}
+                          ]
+                        },
+                        {type: 'text', value: ' '}
+                      ]
+                    },
+                    {type: 'text', value: ' '}
+                  ]
+                }
+              ]
+            }
+          ]
+        }),
+        '*.*_&#x20;_*****__&#x61;__&#x61;*****&#x61;&#x61;_*\\_.***__**a..**&#x20;__&#x20;**_\n'
+      )
+
+      // Patches whose runs below the cut of an outer patch are dropped.
+      assert.equal(
+        to(
+          {
+            type: 'paragraph',
+            children: [
+              {
+                type: 'strong',
+                children: [
+                  {
+                    type: 'strong',
+                    children: [
+                      {
+                        type: 'strong',
+                        children: [
+                          {
+                            type: 'emphasis',
+                            children: [
+                              {type: 'text', value: 'b'},
+                              {
+                                type: 'strong',
+                                children: [
+                                  {type: 'text', value: '.'},
+                                  {type: 'text', value: 'a'},
+                                  {type: 'text', value: '*'}
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {emphasis: '_', strong: '_'}
+        ),
+        '______*&#x62;**.a\\****______\n'
       )
 
       // Runs of other markers that look at all runs while they are smaller.
