@@ -6691,6 +6691,51 @@ test('attention', async function (t) {
   )
 
   await t.test(
+    'should pair as another version around runs that differ from it',
+    async function () {
+      /** @type {Array<PhrasingContent>} */
+      const children = []
+
+      while (children.length < 6) {
+        children.push(
+          {
+            type: 'emphasis',
+            children: [
+              {type: 'text', value: 'a'},
+              {type: 'text', value: 'a'},
+              {
+                type: 'emphasis',
+                children: [
+                  {
+                    type: 'emphasis',
+                    children: [
+                      {type: 'text', value: 'a'},
+                      {type: 'text', value: 'a'}
+                    ]
+                  },
+                  {type: 'text', value: 'a'}
+                ]
+              }
+            ]
+          },
+          {
+            type: 'emphasis',
+            children: [
+              {type: 'emphasis', children: [{type: 'text', value: 'a'}]},
+              {type: 'text', value: 'a'}
+            ]
+          }
+        )
+      }
+
+      assert.equal(
+        to({type: 'paragraph', children}),
+        '*a&#x61;**aa*a****a*a*'.repeat(3) + '\n'
+      )
+    }
+  )
+
+  await t.test(
     'should keep the first mistake where a check pairs as a try did',
     async function () {
       assert.equal(
